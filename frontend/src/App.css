@@ -1,0 +1,330 @@
+/* ---- Design tokens ----
+   Ink:    #1B2430 (near-black navy, headers/text)
+   Slate:  #5B6472 (secondary text)
+   Paper:  #F6F4EF (background, ledger paper)
+   Line:   #DFDACB (hairline rule on paper)
+   Amber:  #C97A2B (late accent — warm, not alarmist red)
+   Green:  #3F7A5C (on-time accent)
+   Display font: 'Fraunces' (clock/serif numerals)
+   Body font:    'Inter'
+   Mono/util:    'JetBrains Mono' (timestamps)
+------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #EFEAE0;
+  font-family: 'Inter', sans-serif;
+  color: #1B2430;
+}
+
+.app-shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.header-mark {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 44px;
+  color: #C97A2B;
+  border: 2px solid #1B2430;
+  border-radius: 50%;
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+.app-header h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 30px;
+  margin: 0 0 4px;
+}
+
+.app-header p {
+  margin: 0;
+  color: #5B6472;
+  font-size: 14px;
+}
+
+.role-card {
+  max-width: 400px;
+  text-align: left;
+}
+
+.role-intro {
+  color: #5B6472;
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.role-btn {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 3px;
+  border: 1px solid #1B2430;
+  background: #1B2430;
+  color: #F6F4EF;
+  cursor: pointer;
+}
+
+.role-btn.secondary {
+  background: transparent;
+  color: #1B2430;
+}
+
+.role-btn:hover { opacity: 0.85; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #5B6472;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 16px;
+  text-decoration: underline;
+}
+
+.grid.single-col {
+  grid-template-columns: 1fr;
+  max-width: 360px;
+}
+
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding: 12px 16px;
+  background: #E9E4D6;
+  border: 1px dashed #C4BCA5;
+  border-radius: 4px;
+}
+
+.demo-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 3px;
+  border: 1px solid #1B2430;
+  background: #1B2430;
+  color: #F6F4EF;
+  cursor: pointer;
+}
+
+.demo-btn.secondary {
+  background: transparent;
+  color: #1B2430;
+}
+
+.demo-btn:hover { opacity: 0.85; }
+
+.demo-message {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #5B6472;
+}
+
+.admin-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-login {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-login input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: #F6F4EF;
+  border: 1px solid #DFDACB;
+  border-radius: 4px;
+  padding: 28px;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #5B6472;
+  margin-bottom: 18px;
+}
+
+/* --- Punch card --- */
+
+.live-clock {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 40px;
+  color: #1B2430;
+  margin-bottom: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+}
+
+.field-row input:focus {
+  outline: 2px solid #C97A2B;
+  outline-offset: 1px;
+}
+
+.field-row button {
+  padding: 10px 18px;
+  background: #1B2430;
+  color: #F6F4EF;
+  border: none;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.field-row button:hover { background: #2A3441; }
+.field-row button:disabled { opacity: 0.6; cursor: default; }
+
+.error-text {
+  color: #B14545;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.stamp {
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 3px;
+  border: 2px dashed;
+  text-align: center;
+}
+
+.stamp.present { border-color: #3F7A5C; color: #3F7A5C; }
+.stamp.late { border-color: #C97A2B; color: #C97A2B; }
+
+.stamp-status {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+.stamp-detail {
+  font-size: 13px;
+  color: #5B6472;
+  margin-top: 4px;
+}
+
+.stamp-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  margin-top: 8px;
+  color: #1B2430;
+}
+
+/* --- Ledger --- */
+
+.empty-state {
+  color: #5B6472;
+  font-size: 14px;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ledger-table th {
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #5B6472;
+  border-bottom: 1px solid #DFDACB;
+  padding-bottom: 8px;
+}
+
+.ledger-table td {
+  padding: 10px 0;
+  border-bottom: 1px solid #EAE6DA;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.row-late { background: rgba(201, 122, 43, 0.06); }
+
+.badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+
+.badge.present { background: rgba(63, 122, 92, 0.15); color: #3F7A5C; }
+.badge.late { background: rgba(201, 122, 43, 0.15); color: #C97A2B; }
