@@ -1,2 +1,2 @@
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/students-list
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/attendance_db
 

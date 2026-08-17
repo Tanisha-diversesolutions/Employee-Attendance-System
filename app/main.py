@@ -14,7 +14,7 @@ app = FastAPI()
 # Allow the React dev server to call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","https://employee-attendance-system-bzippjqww-web-service2.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
