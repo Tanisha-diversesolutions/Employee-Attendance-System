@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Time
+from sqlalchemy import Column, Integer, String, DateTime, Time, Date
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -14,7 +14,7 @@ class ShiftRule(Base):
     __tablename__ = "shift_rules"
 
     id = Column(Integer, primary_key=True, index=True)
-    reporting_time = Column(Time, nullable=False)   # e.g. 09:30:00
+    reporting_time = Column(Time, nullable=False)
     grace_minutes = Column(Integer, default=0)
 
 
@@ -24,5 +24,17 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, nullable=False)
     check_in = Column(DateTime, server_default=func.now())
-    status = Column(String)              # "present" or "late"
+    status = Column(String)
     late_by_minutes = Column(Integer, default=0)
+
+
+class WorkLog(Base):
+    __tablename__ = "work_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, nullable=False)
+    log_date = Column(Date, server_default=func.now())        # which calendar day this log belongs to
+    completed_work = Column(String, nullable=False)            # what they finished today
+    pending_work = Column(String, default="")                  # what's left / carrying over
+    blockers = Column(String, default="")                      # optional: anything stuck on
+    submitted_at = Column(DateTime, server_default=func.now())

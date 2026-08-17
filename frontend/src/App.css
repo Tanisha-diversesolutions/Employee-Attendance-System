@@ -64,6 +64,211 @@ body {
   font-size: 14px;
 }
 
+.worklog-card {
+  margin-top: 16px;
+}
+
+.worklog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+  margin-bottom: 10px;
+}
+
+.worklog-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.success-text {
+  color: #3F7A5C;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.worklog-list-card {
+  width: 100%;
+}
+
+.worklog-entry {
+  border-bottom: 1px solid #EAE6DA;
+  padding: 14px 0;
+}
+
+.worklog-entry:last-child { border-bottom: none; }
+
+.worklog-entry-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.worklog-emp-id {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.worklog-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #5B6472;
+}
+
+.worklog-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #5B6472;
+  margin: 8px 0 2px;
+}
+
+.worklog-text {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.worklog-text.pending {
+  color: #C97A2B;
+}
+
+.grid.single-col.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* --- Work log form (employee) --- */
+
+.worklog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+  margin-bottom: 10px;
+}
+
+.worklog-textarea {
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: #FFFEFB;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.worklog-textarea.small { min-height: 44px; }
+
+.worklog-card button {
+  padding: 10px 18px;
+  background: #1B2430;
+  color: #F6F4EF;
+  border: none;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.success-text {
+  color: #3F7A5C;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* --- Work log list (admin) --- */
+
+.worklog-list-card { grid-column: 1 / -1; margin-top: 24px; }
+
+.eyebrow-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refresh-btn {
+  background: none;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #5B6472;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+
+.worklog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.worklog-entry {
+  border: 1px solid #DFDACB;
+  border-radius: 4px;
+  padding: 14px;
+  background: #FFFEFB;
+}
+
+.worklog-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #EAE6DA;
+}
+
+.worklog-emp {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.worklog-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #5B6472;
+}
+
+.worklog-section { margin-bottom: 8px; }
+.worklog-section p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #1B2430;
+  line-height: 1.4;
+}
+
+.worklog-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.worklog-label.done { color: #3F7A5C; }
+.worklog-label.pending { color: #C97A2B; }
+.worklog-label.blocked { color: #B14545; }
+
 .role-card {
   max-width: 400px;
   text-align: left;
