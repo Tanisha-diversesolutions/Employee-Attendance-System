@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API_URL ="http://localhost:8000";
+const API_URL ="https://employee-attendance-management-fes0.onrender.com";
 
 function LiveClock() {
   const [now, setNow] = useState(new Date());
