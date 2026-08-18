@@ -320,6 +320,53 @@ body {
   max-width: 360px;
 }
 
+.worklog-card textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  margin-top: 8px;
+  resize: vertical;
+  min-height: 50px;
+  background: #FFFEFB;
+}
+
+.worklog-card input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFDACB;
+  border-radius: 3px;
+  font-size: 14px;
+  background: #FFFEFB;
+}
+
+.worklog-card button {
+  margin-top: 10px;
+  padding: 10px 18px;
+  background: #1B2430;
+  color: #F6F4EF;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.worklog-status {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #5B6472;
+}
+
+.worklog-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid #EAE6DA;
+  font-size: 13px;
+}
+
+.worklog-entry p { margin: 4px 0; color: #3A4250; }
+
 .demo-bar {
   display: flex;
   align-items: center;

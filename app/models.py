@@ -27,14 +27,14 @@ class Attendance(Base):
     status = Column(String)
     late_by_minutes = Column(Integer, default=0)
 
-
 class WorkLog(Base):
     __tablename__ = "work_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, nullable=False)
-    log_date = Column(Date, server_default=func.now())        # which calendar day this log belongs to
-    completed_work = Column(String, nullable=False)            # what they finished today
-    pending_work = Column(String, default="")                  # what's left / carrying over
-    blockers = Column(String, default="")                      # optional: anything stuck on
+    log_date = Column(Date, server_default=func.now())
+    completed_work = Column(String, nullable=False)
+    pending_work = Column(String, default="")
+    blockers = Column(String, default="")
     submitted_at = Column(DateTime, server_default=func.now())
+

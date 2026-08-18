@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime, date
 
 class AttendanceResponse(BaseModel):
@@ -7,27 +7,6 @@ class AttendanceResponse(BaseModel):
     status: str
     late_by_minutes: int
 
-    class Config:
-        orm_mode = True   # lets Pydantic read data straight from SQLAlchemy objects
+    model_config = ConfigDict(from_attributes=True)
 
 
-class WorkLogCreate(BaseModel):
-    """Shape of what the EMPLOYEE sends in when submitting their end-of-day update."""
-    employee_id: int
-    completed_work: str
-    pending_work: str = ""
-    blockers: str = ""
-
-
-class WorkLogResponse(BaseModel):
-    """Shape of what comes back — used both to confirm submission and for the admin's list."""
-    id: int
-    employee_id: int
-    log_date: date
-    completed_work: str
-    pending_work: str
-    blockers: str
-    submitted_at: datetime
-
-    class Config:
-        orm_mode = True
