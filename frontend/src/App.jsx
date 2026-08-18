@@ -16,7 +16,7 @@ function LiveClock() {
     </div>
   );
 }
-
+// #this is connected to git
 function CheckInPanel({ onNewRecord }) {
   const [employeeId, setEmployeeId] = useState("");
   const [result, setResult] = useState(null);
