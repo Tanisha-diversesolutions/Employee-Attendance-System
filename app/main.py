@@ -14,6 +14,10 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {"message": "Employee Attendance System API is running"}
+
 # Allow the React dev server and deployed Vercel frontend to call this API.
 allowed_origins = ["http://localhost:5173", "https://employee-attendance-system-inky.vercel.app/"]
 configured_origins = os.getenv("CORS_ORIGINS", "")
