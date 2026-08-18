@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+#  test comment 
 
 def calculate_status(check_in: datetime, reporting_time, grace_minutes: int = 0):
     """
