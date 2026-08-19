@@ -89,6 +89,46 @@ class WorkLogSubmit(BaseModel):
     pending_work: str = ""
     blockers: str = ""
 
+@app.post("/demo/reset")
+def reset_demo(db: Session = Depends(get_db)):
+    """
+    Wipes attendance records, makes sure two demo employees exist,
+    and resets the shift rule to 9:30 AM. Safe to call as many times as needed.
+    """
+    db.query(models.Attendance).delete()
+
+    rule = db.query(models.ShiftRule).first()
+    if rule:
+        rule.reporting_time = time(9, 30, 0)
+        rule.grace_minutes = 0
+    else:
+        rule = models.ShiftRule(reporting_time=time(9, 30, 0), grace_minutes=0)
+        db.add(rule)
+
+    if not db.query(models.Employee).filter_by(id=1).first():
+        db.add(models.Employee(id=1, name="Ananya Rout", email="ananya@company.com"))
+    if not db.query(models.Employee).filter_by(id=2).first():
+        db.add(models.Employee(id=2, name="Rohit Sahoo", email="rohit@company.com"))
+
+    db.commit()
+    return {"message": "Demo reset — 2 employees ready, shift rule set to 09:30, records cleared."}
+
+
+@app.post("/demo/simulate-late")
+def simulate_late(db: Session = Depends(get_db)):
+    """
+    Sets the shift rule's reporting_time to a minute before right now,
+    so the NEXT check-in you make will read as late.
+    """
+    rule = db.query(models.ShiftRule).first()
+    target = (datetime.now() - timedelta(minutes=1)).time()
+    if rule:
+        rule.reporting_time = target
+    else:
+        rule = models.ShiftRule(reporting_time=target, grace_minutes=0)
+        db.add(rule)
+    db.commit()
+    return {"message": f"Reporting time set to {target} — next check-in will be marked late."}
 
 @app.post("/worklog/submit/{employee_id}")
 def submit_worklog(employee_id: int, entry: WorkLogSubmit, db: Session = Depends(get_db)):
