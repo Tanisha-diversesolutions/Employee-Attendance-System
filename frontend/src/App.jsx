@@ -1,345 +1,226 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import {
+  Users,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  FileCheck,
+  Building2,
+  Shield,
+  User,
+  ArrowRight,
+  TrendingUp,
+  Award,
+} from "lucide-react";
+
+import { Navbar } from "./components/Navbar";
+import { StatCard } from "./components/StatCard";
+import { CheckInPanel } from "./components/CheckInPanel";
+import { WorkLogForm } from "./components/WorkLogForm";
+import { LedgerTable } from "./components/LedgerTable";
+import { WorkLogFeed } from "./components/WorkLogFeed";
+import { AdminLogin } from "./components/AdminLogin";
+import { DemoToolbar } from "./components/DemoToolbar";
+
 import "./App.css";
 
-const API_URL ="https://employee-attendance-management-fes0.onrender.com";
+const API_URL = "https://employee-attendance-management-fes0.onrender.com";
 
-function LiveClock() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="live-clock">
-      {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-    </div>
-  );
-}
-// #this is connected to git
-function CheckInPanel({ onNewRecord }) {
-  const [employeeId, setEmployeeId] = useState("");
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleCheckIn = async () => {
-    setError("");
-    if (!employeeId) {
-      setError("Enter an employee ID to punch in.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API_URL}/attendance/checkin/${employeeId}`);
-      setResult(res.data);
-      onNewRecord(res.data);
-    } catch (err) {
-      setError("Punch failed — check the backend is running.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="card punch-card">
-      <div className="eyebrow">Punch In</div>
-      <LiveClock />
-
-      <div className="field-row">
-        <input
-          type="number"
-          placeholder="Employee ID"
-          value={employeeId}
-          onChange={(e) => setEmployeeId(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleCheckIn()}
-        />
-        <button onClick={handleCheckIn} disabled={loading}>
-          {loading ? "Stamping…" : "Punch In"}
-        </button>
-      </div>
-
-      {error && <p className="error-text">{error}</p>}
-
-      {result && (
-        <div className={`stamp ${result.status}`}>
-          <div className="stamp-status">
-            {result.status === "late" ? "LATE" : "ON TIME"}
-          </div>
-          <div className="stamp-detail">
-            {result.status === "late"
-              ? `${result.late_by_minutes} min past 9:30`
-              : "Right on schedule"}
-          </div>
-          <div className="stamp-time">
-            {new Date(result.check_in).toLocaleTimeString()}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Ledger({ records }) {
-  return (
-    <div className="card ledger-card">
-      <div className="eyebrow">Today's Ledger</div>
-      {records.length === 0 ? (
-        <p className="empty-state">No punches logged yet — the ledger fills in as people check in.</p>
-      ) : (
-        <table className="ledger-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Late by</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((r, i) => (
-              <tr key={i} className={r.status === "late" ? "row-late" : ""}>
-                <td>{r.employee_id}</td>
-                <td>{new Date(r.check_in).toLocaleTimeString()}</td>
-                <td>
-                  <span className={`badge ${r.status}`}>{r.status}</span>
-                </td>
-                <td>{r.status === "late" ? `${r.late_by_minutes}m` : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
-}
-function WorkLogAdmin() {
-  const [logs, setLogs] = useState([]);
-
-  useEffect(() => {
-    axios.get(`${API_URL}/worklog/today`).then((res) => setLogs(res.data)).catch(() => {});
-  }, []);
-
-  return (
-    <div className="card">
-      <div className="eyebrow">Today's Work Updates</div>
-      {logs.length === 0 ? (
-        <p className="empty-state">No updates submitted yet today.</p>
-      ) : (
-        logs.map((log, i) => (
-          <div key={i} className="worklog-entry">
-            <strong>Employee {log.employee_id}</strong>
-            <p><em>Completed:</em> {log.completed_work}</p>
-            {log.pending_work && <p><em>Pending:</em> {log.pending_work}</p>}
-            {log.blockers && <p><em>Blockers:</em> {log.blockers}</p>}
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
-function DemoControls({ onReset }) {
-  const [message, setMessage] = useState("");
-
-  const resetDemo = async () => {
-    const res = await axios.post(`${API_URL}/demo/reset`);
-    setMessage(res.data.message);
-    onReset();
-  };
-
-  const simulateLate = async () => {
-    const res = await axios.post(`${API_URL}/demo/simulate-late`);
-    setMessage(res.data.message);
-  };
-
-  return (
-    <div className="demo-bar">
-      <button className="demo-btn" onClick={resetDemo}>Reset Demo</button>
-      <button className="demo-btn secondary" onClick={simulateLate}>
-        Simulate Late Arrival
-      </button>
-      {message && <span className="demo-message">{message}</span>}
-    </div>
-  );
-}
-
-const ADMIN_PASSWORD = "admin123"; // demo-only — see README note on real auth
-
-function RoleSelect({ onSelect }) {
-  return (
-    <div className="card role-card">
-      <div className="eyebrow">Who's checking in?</div>
-      <p className="role-intro">Choose how you'd like to continue.</p>
-      <div className="role-buttons">
-        <button className="role-btn" onClick={() => onSelect("employee")}>
-          I'm an Employee
-        </button>
-        <button className="role-btn secondary" onClick={() => onSelect("admin")}>
-          I'm an Admin
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function AdminLogin({ onSuccess, onBack }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const tryLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      onSuccess();
-    } else {
-      setError("Wrong password.");
-    }
-  };
-
-  return (
-    <div className="card role-card">
-      <div className="eyebrow">Admin Login</div>
-      <div className="field-row">
-        <input
-          type="password"
-          placeholder="Admin password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && tryLogin()}
-        />
-        <button onClick={tryLogin}>Enter</button>
-      </div>
-      {error && <p className="error-text">{error}</p>}
-      <button className="link-btn" onClick={onBack}>← Back</button>
-    </div>
-  );
-}
-
-function WorkLogForm() {
-  const [employeeId, setEmployeeId] = useState("");
-  const [completed, setCompleted] = useState("");
-  const [pending, setPending] = useState("");
-  const [blockers, setBlockers] = useState("");
-  const [status, setStatus] = useState("");
-
-  const submit = async () => {
-    if (!employeeId || !completed) {
-      setStatus("Enter your employee ID and today's completed work.");
-      return;
-    }
-    try {
-      await axios.post(`${API_URL}/worklog/submit/${employeeId}`, {
-        completed_work: completed,
-        pending_work: pending,
-        blockers: blockers,
-      });
-      setStatus("Submitted — your admin can see this now.");
-      setCompleted(""); setPending(""); setBlockers("");
-    } catch {
-      setStatus("Submission failed — check the backend is running.");
-    }
-  };
-
-  return (
-    <div className="card worklog-card">
-      <div className="eyebrow">Today's Work Update</div>
-      <input
-        type="number"
-        placeholder="Employee ID"
-        value={employeeId}
-        onChange={(e) => setEmployeeId(e.target.value)}
-      />
-      <textarea
-        placeholder="What did you complete today?"
-        value={completed}
-        onChange={(e) => setCompleted(e.target.value)}
-      />
-      <textarea
-        placeholder="What's pending / carrying over?"
-        value={pending}
-        onChange={(e) => setPending(e.target.value)}
-      />
-      <textarea
-        placeholder="Any blockers? (optional)"
-        value={blockers}
-        onChange={(e) => setBlockers(e.target.value)}
-      />
-      <button onClick={submit}>Submit Update</button>
-      {status && <p className="worklog-status">{status}</p>}
-    </div>
-  );
-}
-
-function App() {
-  const [role, setRole] = useState(null);   // null | "employee" | "admin" | "admin-locked"
+export default function App() {
+  const [role, setRole] = useState(null); // null | "employee" | "admin" | "admin-locked"
   const [records, setRecords] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
-  const fetchAttendance = async () => {
+  // Toast Notification Dispatcher
+  const showToast = useCallback((message, type = "success") => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+  }, []);
+
+  // Fetch Attendance Records
+  const fetchAttendance = useCallback(async () => {
+    setIsRefreshing(true);
     try {
       const res = await axios.get(`${API_URL}/attendance/today`);
-      setRecords((prev) => {
-        const ids = new Set(prev.map((p) => `${p.employee_id}-${p.check_in}`));
-        const merged = [...prev];
-        res.data.forEach((r) => {
-          const key = `${r.employee_id}-${r.check_in}`;
-          if (!ids.has(key)) merged.push(r);
-        });
-        return merged;
-      });
+      setRecords(res.data || []);
     } catch {
-      /* backend may not have data yet — silent */
+      /* silent during background poll */
+    } finally {
+      setIsRefreshing(false);
     }
-  };
+  }, []);
 
+  // Real-time Polling for Admin View (Every 5 seconds)
   useEffect(() => {
-  if (role !== "admin") return;
-  fetchAttendance();                          // load immediately
-  const interval = setInterval(fetchAttendance, 5000);  // then refresh every 5s
-  return () => clearInterval(interval);        // stop polling when leaving admin view
-}, [role]);
+    if (role !== "admin") return;
+    fetchAttendance();
+    const interval = setInterval(fetchAttendance, 5000);
+    return () => clearInterval(interval);
+  }, [role, fetchAttendance]);
+
+  // Executive KPI Calculations
+  const totalPunches = records.length;
+  const onTimeCount = records.filter((r) => r.status === "present").length;
+  const lateCount = records.filter((r) => r.status === "late").length;
+  const punctualityRate =
+    totalPunches > 0 ? Math.round((onTimeCount / totalPunches) * 100) : 100;
+
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div className="header-mark">09:30</div>
-        <div>
-          <h1>Attendance Desk</h1>
-          <p>Reporting time is 9:30 AM — every punch is checked against it.</p>
+      {/* Top Enterprise Navigation */}
+      <Navbar
+        role={role}
+        onSwitchRole={() => setRole(null)}
+        shiftTime="09:30 AM"
+      />
+
+      {/* 1. GATEWAY LANDING VIEW */}
+      {role === null && (
+        <div className="gateway-container">
+          <div className="gateway-intro">
+            <h2>Welcome to Apex WorkDesk</h2>
+            <p>
+              Corporate attendance validation, shift compliance monitoring, and
+              daily end-of-day standup logs. Please select your workspace.
+            </p>
+          </div>
+
+          <div className="gateway-cards-grid">
+            {/* Employee Portal Card */}
+            <div
+              className="gateway-card employee-portal"
+              onClick={() => setRole("employee")}
+            >
+              <div className="gateway-icon-wrap">
+                <User size={32} />
+              </div>
+              <h3>Employee Workspace</h3>
+              <p>
+                Punch in for your daily shift, verify reporting timeliness, and
+                submit end-of-day work summaries.
+              </p>
+              <button className="gateway-action-btn">
+                <span>Enter Employee Portal</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Admin Management Card */}
+            <div
+              className="gateway-card admin-portal"
+              onClick={() => setRole("admin-locked")}
+            >
+              <div className="gateway-icon-wrap">
+                <Shield size={32} />
+              </div>
+              <h3>HR Management Console</h3>
+              <p>
+                Real-time master ledger, executive punctuality analytics, CSV
+                reports, and employee work update feed.
+              </p>
+              <button className="gateway-action-btn">
+                <span>Enter Admin Console</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
-      </header>
-
-      {/* Nobody has chosen a role yet */}
-      {role === null && <RoleSelect onSelect={(r) => setRole(r === "admin" ? "admin-locked" : "employee")} />}
-
-      {/* Admin picked, but not authenticated yet */}
-      {role === "admin-locked" && (
-        <AdminLogin onSuccess={() => setRole("admin")} onBack={() => setRole(null)} />
       )}
 
-      {/* EMPLOYEE VIEW — only their own punch result, nothing else */}
+      {/* 2. ADMIN AUTHENTICATION MODAL */}
+      {role === "admin-locked" && (
+        <AdminLogin
+          onSuccess={() => setRole("admin")}
+          onBack={() => setRole(null)}
+          onToast={showToast}
+        />
+      )}
+
+      {/* 3. EMPLOYEE PORTAL VIEW */}
       {role === "employee" && (
-  <>
-    <button className="link-btn" onClick={() => setRole(null)}>← Switch role</button>
-    <main className="grid single-col">
-      <CheckInPanel onNewRecord={() => {}} />
-      <WorkLogForm />
-    </main>
-  </>
-)}
+        <div className="dashboard-grid">
+          <div className="employee-two-col">
+            <CheckInPanel
+              apiUrl={API_URL}
+              onNewRecord={fetchAttendance}
+              onToast={showToast}
+            />
+            <WorkLogForm apiUrl={API_URL} onToast={showToast} />
+          </div>
+        </div>
+      )}
 
-      {/* ADMIN VIEW — full ledger + demo controls */}
+      {/* 4. ADMIN MANAGEMENT CONSOLE */}
       {role === "admin" && (
-  <>
-    <button className="link-btn" onClick={() => setRole(null)}>← Switch role</button>
-    <DemoControls onReset={() => setRecords([])} />
-    <main className="grid">
-    <CheckInPanel onNewRecord={fetchAttendance} />
-      <Ledger records={records} />
+        <div className="dashboard-grid">
+          {/* Demo Sandbox Toolbar */}
+          <DemoToolbar
+            apiUrl={API_URL}
+            onResetLedger={() => setRecords([])}
+            onToast={showToast}
+          />
 
-    </main>
-    <WorkLogAdmin />
-  </>
-)}
+          {/* Executive Stat Cards */}
+          <div className="stats-grid">
+            <StatCard
+              title="Today's Total Punches"
+              value={totalPunches}
+              subtext="Recorded employee timecards"
+              icon={Users}
+              trend={{ label: "Live Polling Active", type: "trend-info" }}
+              variant="default"
+            />
+            <StatCard
+              title="On-Time Arrivals"
+              value={onTimeCount}
+              subtext="Complied with 09:30 AM shift"
+              icon={CheckCircle2}
+              variant="success"
+            />
+            <StatCard
+              title="Late Arrivals"
+              value={lateCount}
+              subtext="Exceeded grace period"
+              icon={AlertTriangle}
+              variant="warning"
+            />
+            <StatCard
+              title="Punctuality Score"
+              value={`${punctualityRate}%`}
+              subtext="Overall shift compliance"
+              icon={Award}
+              variant="info"
+            />
+          </div>
+
+          {/* Master Live Ledger */}
+          <LedgerTable
+            records={records}
+            onRefresh={fetchAttendance}
+            isRefreshing={isRefreshing}
+          />
+
+          {/* Work Updates / Standups Feed */}
+          <WorkLogFeed apiUrl={API_URL} />
+        </div>
+      )}
+
+      {/* Toast Notification Container */}
+      <div className="toast-container">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast-item toast-${t.type}`}>
+            {t.type === "success" && <CheckCircle2 size={16} />}
+            {t.type === "warning" && <AlertTriangle size={16} />}
+            {t.type === "error" && <AlertTriangle size={16} />}
+            <span>{t.message}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
-export default App;
