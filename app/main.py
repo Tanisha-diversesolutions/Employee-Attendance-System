@@ -84,6 +84,12 @@ def get_late_today(db: Session = Depends(get_db)):
     records = db.query(models.Attendance).filter(models.Attendance.status == "late").all()
     return [r for r in records if r.check_in.date() == today]
 
+@app.get("/attendance/today")
+def get_all_today(db: Session = Depends(get_db)):
+    today = datetime.now().date()
+    records = db.query(models.Attendance).all()
+    return [r for r in records if r.check_in.date() == today]
+
 class WorkLogSubmit(BaseModel):
     completed_work: str
     pending_work: str = ""

@@ -275,7 +275,7 @@ function App() {
 
   const fetchLate = async () => {
     try {
-      const res = await axios.get(`${API_URL}/attendance/late-today`);
+      const res = await axios.get(`${API_URL}/attendance/today`);
       setRecords((prev) => {
         const ids = new Set(prev.map((p) => `${p.employee_id}-${p.check_in}`));
         const merged = [...prev];
