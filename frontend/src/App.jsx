@@ -273,7 +273,7 @@ function App() {
   const [role, setRole] = useState(null);   // null | "employee" | "admin" | "admin-locked"
   const [records, setRecords] = useState([]);
 
-  const fetchLate = async () => {
+  const fetchAttendance = async () => {
     try {
       const res = await axios.get(`${API_URL}/attendance/today`);
       setRecords((prev) => {
@@ -291,8 +291,11 @@ function App() {
   };
 
   useEffect(() => {
-    if (role === "admin") fetchLate();
-  }, [role]);
+  if (role !== "admin") return;
+  fetchAttendance();                          // load immediately
+  const interval = setInterval(fetchAttendance, 5000);  // then refresh every 5s
+  return () => clearInterval(interval);        // stop polling when leaving admin view
+}, [role]);
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -328,7 +331,7 @@ function App() {
     <button className="link-btn" onClick={() => setRole(null)}>← Switch role</button>
     <DemoControls onReset={() => setRecords([])} />
     <main className="grid">
-      <CheckInPanel onNewRecord={(rec) => setRecords((prev) => [rec, ...prev])} />
+    <CheckInPanel onNewRecord={fetchAttendance} />
       <Ledger records={records} />
 
     </main>
