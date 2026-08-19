@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .database import engine, get_db
 
+
 # This line reads your models.py and actually creates the tables
 # in PostgreSQL the first time you run the app.
 models.Base.metadata.create_all(bind=engine)
