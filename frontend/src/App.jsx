@@ -25,7 +25,7 @@ import { DemoToolbar } from "./components/DemoToolbar";
 
 import "./App.css";
 
-const API_URL = "https://employee-attendance-management-fes0.onrender.com";
+const API_URL = "https://employee-attendance-system-xgsf.onrender.com";
 
 export default function App() {
   const [role, setRole] = useState(null); // null | "employee" | "admin" | "admin-locked"
