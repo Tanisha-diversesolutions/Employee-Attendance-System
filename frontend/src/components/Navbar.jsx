@@ -39,12 +39,12 @@ export function Navbar({ role, onSwitchRole, shiftTime = "09:30 AM" }) {
     <header className="navbar-container">
       <div className="navbar-left">
         <div className="brand-badge">
-          <Building2 size={22} className="brand-icon" />
+          <img src="/Logo1.jpg" alt="Diverse Solutions Logo" className="brand-logo-img" />
         </div>
         <div className="brand-info">
           <div className="brand-title-row">
-            <h1 className="brand-title">Apex Attendance</h1>
-            <span className="brand-version">v2.4 Enterprise</span>
+            <h1 className="brand-title">Diverse Solutions</h1>
+            <span className="brand-version">Attendance Portal</span>
           </div>
           <p className="brand-subtitle">Automated Shift & Work Management Desk</p>
         </div>

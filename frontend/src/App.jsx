@@ -83,7 +83,7 @@ export default function App() {
       {role === null && (
         <div className="gateway-container">
           <div className="gateway-intro">
-            <h2>Welcome to Apex WorkDesk</h2>
+            <h2>Welcome to Diverse Solutions Attendance Portal</h2>
             <p>
               Corporate attendance validation, shift compliance monitoring, and
               daily end-of-day standup logs. Please select your workspace.
