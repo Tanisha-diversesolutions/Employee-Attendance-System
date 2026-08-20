@@ -116,6 +116,10 @@ def reset_demo(db: Session = Depends(get_db)):
         db.add(models.Employee(id=1, name="Ananya Rout", email="ananya@company.com"))
     if not db.query(models.Employee).filter_by(id=2).first():
         db.add(models.Employee(id=2, name="Rohit Sahoo", email="rohit@company.com"))
+    if not db.query(models.Employee).filter_by(id=3).first():
+        db.add(models.Employee(id=3, name="Demo Employee", email="demo@company.com"))
+    if not db.query(models.Employee).filter_by(id=4).first():
+        db.add(models.Employee(id=4, name="Demo Employee 2", email="demo2@company.com"))
 
     db.commit()
     return {"message": "Demo reset — 2 employees ready, shift rule set to 09:30, records cleared."}
