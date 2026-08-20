@@ -6,28 +6,26 @@ export function WorkLogForm({ apiUrl, onToast }) {
   const [employeeId, setEmployeeId] = useState("");
   const [completed, setCompleted] = useState("");
   const [pending, setPending] = useState("");
-  const [blockers, setBlockers] = useState("");
   const [loading, setLoading] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!employeeId || !completed.trim()) {
-      if (onToast) onToast("Please provide your Employee ID and completed work.", "warning");
+      if (onToast) onToast("Please provide your Employee ID or Name and completed work.", "warning");
       return;
     }
 
     setLoading(true);
     try {
-      await axios.post(`${apiUrl}/worklog/submit/${employeeId}`, {
+      await axios.post(`${apiUrl}/worklog/submit/${encodeURIComponent(employeeId.trim())}`, {
         completed_work: completed.trim(),
         pending_work: pending.trim(),
-        blockers: blockers.trim(),
+        blockers: "",
       });
       setSubmittedSuccess(true);
       setCompleted("");
       setPending("");
-      setBlockers("");
       if (onToast) onToast("Daily work report submitted successfully!", "success");
       setTimeout(() => setSubmittedSuccess(false), 6000);
     } catch (err) {
@@ -51,7 +49,7 @@ export function WorkLogForm({ apiUrl, onToast }) {
       </div>
 
       <p className="card-description">
-        Submit your deliverables, in-progress tasks, and roadblocks for management review and project tracking.
+        Submit your deliverables and in-progress tasks for management review and project tracking.
       </p>
 
       {submittedSuccess && (
@@ -92,28 +90,15 @@ export function WorkLogForm({ apiUrl, onToast }) {
           />
         </div>
 
-        <div className="form-grid-two">
-          <div className="form-group">
-            <label className="input-label">In-Progress / Carrying Over (Optional)</label>
-            <textarea
-              rows="2"
-              placeholder="What will you pick up next session?"
-              value={pending}
-              onChange={(e) => setPending(e.target.value)}
-              className="styled-textarea"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="input-label">Blockers or Dependencies (Optional)</label>
-            <textarea
-              rows="2"
-              placeholder="Any blockers or help needed from leads?"
-              value={blockers}
-              onChange={(e) => setBlockers(e.target.value)}
-              className="styled-textarea warning-border-focus"
-            />
-          </div>
+        <div className="form-group">
+          <label className="input-label">In-Progress / Carrying Over (Optional)</label>
+          <textarea
+            rows="2"
+            placeholder="What will you pick up next session?"
+            value={pending}
+            onChange={(e) => setPending(e.target.value)}
+            className="styled-textarea"
+          />
         </div>
 
         <div className="form-footer">

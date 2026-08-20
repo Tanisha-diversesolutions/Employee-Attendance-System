@@ -26,7 +26,11 @@ import { EmployeeManager } from "./components/EmployeeManager";
 
 import "./App.css";
 
-const API_URL = "https://employee-attendance-system-xgsf.onrender.com";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : "https://employee-attendance-system-xgsf.onrender.com");
 
 export default function App() {
   const [role, setRole] = useState(null); // null | "employee" | "admin" | "admin-locked"
