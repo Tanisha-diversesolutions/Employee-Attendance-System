@@ -1,12 +1,14 @@
 import os
 from datetime import datetime, timedelta, time
 from pydantic import BaseModel
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI 
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .database import engine, get_db
+
+
 
 
 # This line reads your models.py and actually creates the tables
@@ -56,7 +58,7 @@ def calculate_status(check_in: datetime, reporting_time, grace_minutes: int = 0)
 
 
 @app.post("/attendance/checkin/{employee_id}", response_model=schemas.AttendanceResponse)
-def check_in(employee_id: int, db: Session = Depends(get_db)):
+def check_in(employee_id: int, db: Session = Depends(get_db)): 
     now = datetime.now()
 
     # Get the shift rule (for now, assume one rule for the whole company)
