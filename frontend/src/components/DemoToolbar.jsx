@@ -69,7 +69,7 @@ export function DemoToolbar({ apiUrl, onResetLedger, onToast }) {
         </div>
       </div>
       {statusMessage && (
-        <div className="demo-feedback-banner">
+        <div className="demo-feedback-banner">                      
           <CheckCircle size={14} />
           <span>{statusMessage}</span>
         </div>
