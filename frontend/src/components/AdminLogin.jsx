@@ -1,20 +1,31 @@
 import React, { useState } from "react";
-import { Lock, ShieldAlert, ArrowLeft, KeyRound, Check } from "lucide-react";
+import { Lock, ShieldAlert, ArrowLeft, KeyRound, Check, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export function AdminLogin({ onSuccess, onBack, onToast }) {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const ADMIN_PASSWORD = "admin123";
+  const [attempts, setAttempts] = useState(0);
+
+  // Read admin password from Vite environment or use a secure fallback
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "Diverse@Admin2026";
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!password) {
+      setError("Please enter the administrator password.");
+      return;
+    }
+
     if (password === ADMIN_PASSWORD) {
       setError("");
-      if (onToast) onToast("Authenticated as HR Administrator", "success");
+      if (onToast) onToast("Authenticated successfully. Welcome, Administrator.", "success");
       onSuccess();
     } else {
-      setError("Incorrect password. Demo access is 'admin123'.");
-      if (onToast) onToast("Invalid credentials", "error");
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
+      setError("Access denied: Incorrect administrator password.");
+      if (onToast) onToast("Authentication failed: Invalid credentials", "error");
     }
   };
 
@@ -29,7 +40,7 @@ export function AdminLogin({ onSuccess, onBack, onToast }) {
 
         <div className="login-header-text">
           <h2>HR Administrator Portal</h2>
-          <p>Restricted area for company attendance records & policy management.</p>
+          <p>Restricted access for authorized management personnel only.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -38,8 +49,8 @@ export function AdminLogin({ onSuccess, onBack, onToast }) {
             <div className="password-input-wrapper">
               <KeyRound size={16} className="key-icon" />
               <input
-                type="password"
-                placeholder="Enter password..."
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter admin password..."
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -47,16 +58,16 @@ export function AdminLogin({ onSuccess, onBack, onToast }) {
                 }}
                 className="styled-input with-icon"
                 autoFocus
+                required
               />
-            </div>
-            <div className="password-hint">
-              <span>Demo Password: <code>admin123</code></span>
               <button
                 type="button"
-                className="btn-quick-fill"
-                onClick={() => setPassword("admin123")}
+                className="btn-toggle-eye"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? "Hide password" : "Show password"}
               >
-                Auto-fill
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -83,3 +94,4 @@ export function AdminLogin({ onSuccess, onBack, onToast }) {
     </div>
   );
 }
+
