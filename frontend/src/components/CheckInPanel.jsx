@@ -1,40 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { LogIn, CheckCircle2, AlertCircle, Sparkles, UserCheck, Timer } from "lucide-react";
+import { LogIn, CheckCircle2, AlertCircle, Sparkles, UserCheck, Timer, User } from "lucide-react";
 
 export function CheckInPanel({ apiUrl, onNewRecord, onToast }) {
-  const [employeeId, setEmployeeId] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [employees, setEmployees] = useState([]);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const demoEmployees = [
-    { id: "1", name: "Ananya Rout", role: "Software Engineer" },
-    { id: "2", name: "Rohit Sahoo", role: "Product Designer" },
-  ];
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/employees`);
+      setEmployees(res.data || []);
+    } catch {
+      /* fallback if offline */
+    }
+  }, [apiUrl]);
 
-  const handleCheckIn = async (customId) => {
-    const idToPunch = customId || employeeId;
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
+
+  const handleCheckIn = async (customIdentifier) => {
+    const inputVal = (customIdentifier !== undefined ? customIdentifier : identifier).toString().trim();
     setError("");
-    if (!idToPunch) {
-      setError("Please select or enter an Employee ID.");
+    setResult(null);
+
+    if (!inputVal) {
+      setError("Please enter your Employee ID or Full Name.");
       return;
     }
     setLoading(true);
     try {
-      const res = await axios.post(`${apiUrl}/attendance/checkin/${idToPunch}`);
-      setResult(res.data);
-      if (onNewRecord) onNewRecord(res.data);
+      const res = await axios.post(`${apiUrl}/attendance/checkin/${encodeURIComponent(inputVal)}`);
+      const data = res.data;
+      setResult(data);
+
+      if (onNewRecord) onNewRecord(data);
       if (onToast) {
+        const empLabel = data.employee_name || `Employee #${data.employee_id}`;
         onToast(
-          res.data.status === "late"
-            ? `Late check-in recorded for Employee #${idToPunch}`
-            : `Punch confirmed! Employee #${idToPunch} marked On Time.`,
-          res.data.status === "late" ? "warning" : "success"
+          data.status === "late"
+            ? `Late check-in recorded for ${empLabel} (+${data.late_by_minutes}m)`
+            : `Punch confirmed! ${empLabel} marked On Time.`,
+          data.status === "late" ? "warning" : "success"
         );
       }
     } catch (err) {
-      const errMsg = "Punch recording failed. Ensure backend service is reachable.";
+      const errMsg =
+        err.response?.data?.detail ||
+        "Punch recording failed. Ensure backend service is reachable.";
       setError(errMsg);
       if (onToast) onToast(errMsg, "error");
     } finally {
@@ -58,43 +74,51 @@ export function CheckInPanel({ apiUrl, onNewRecord, onToast }) {
       </div>
 
       <p className="card-description">
-        Record your shift attendance. Your punch timestamp is automatically verified against official shift policy.
+        Record your shift attendance. Enter your <strong>Employee ID</strong> (e.g. <code>1</code>, <code>101</code>) or your <strong>Full Name</strong> (e.g. <code>Ananya Rout</code>).
       </p>
 
-      {/* Quick Select Employee Chips */}
-      <div className="quick-select-section">
-        <label className="input-label">Quick Select Employee:</label>
-        <div className="quick-chips-grid">
-          {demoEmployees.map((emp) => (
-            <button
-              key={emp.id}
-              type="button"
-              className={`employee-chip ${employeeId === emp.id ? "active" : ""}`}
-              onClick={() => {
-                setEmployeeId(emp.id);
-                setError("");
-              }}
-            >
-              <div className="chip-avatar">{emp.name.charAt(0)}</div>
-              <div className="chip-text">
-                <span className="chip-name">{emp.name}</span>
-                <span className="chip-id">ID: #{emp.id} • {emp.role}</span>
-              </div>
-            </button>
-          ))}
+      {/* Dynamic Registered Employee Chips */}
+      {employees.length > 0 && (
+        <div className="quick-select-section">
+          <label className="input-label">Quick Select Employee:</label>
+          <div className="quick-chips-grid">
+            {employees.slice(0, 8).map((emp) => {
+              const isSelected =
+                identifier === String(emp.id) ||
+                identifier.toLowerCase() === emp.name.toLowerCase();
+              return (
+                <button
+                  key={emp.id}
+                  type="button"
+                  className={`employee-chip ${isSelected ? "active" : ""}`}
+                  onClick={() => {
+                    setIdentifier(String(emp.id));
+                    setError("");
+                  }}
+                >
+                  <div className="chip-avatar">
+                    {emp.name ? emp.name.charAt(0).toUpperCase() : "#"}
+                  </div>
+                  <div className="chip-text">
+                    <span className="chip-name">{emp.name}</span>
+                    <span className="chip-id">ID: #{emp.id}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Employee ID Input & Punch Button */}
+      {/* Employee ID or Name Input & Punch Button */}
       <div className="punch-input-group">
         <div className="input-wrapper">
-          <label className="input-label">Employee ID Number</label>
+          <label className="input-label">Employee ID or Name</label>
           <input
-            type="number"
-            min="1"
-            placeholder="e.g. 1, 2, 101"
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
+            type="text"
+            placeholder="Enter ID (e.g. 1) or Name (e.g. Rahul)"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCheckIn()}
             className="styled-input"
           />
@@ -151,8 +175,10 @@ export function CheckInPanel({ apiUrl, onNewRecord, onToast }) {
 
           <div className="stamp-body-details">
             <div className="detail-item">
-              <span className="detail-label">Employee ID</span>
-              <strong className="detail-val">#{result.employee_id}</strong>
+              <span className="detail-label">Employee</span>
+              <strong className="detail-val">
+                {result.employee_name || `#${result.employee_id}`} (ID: #{result.employee_id})
+              </strong>
             </div>
             <div className="detail-item">
               <span className="detail-label">Reporting Policy</span>
@@ -170,3 +196,4 @@ export function CheckInPanel({ apiUrl, onNewRecord, onToast }) {
     </div>
   );
 }
+

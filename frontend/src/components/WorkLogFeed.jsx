@@ -24,8 +24,12 @@ export function WorkLogFeed({ apiUrl }) {
   }, [apiUrl]);
 
   const filteredLogs = logs.filter((log) => {
-    if (!filterEmp) return true;
-    return String(log.employee_id).includes(filterEmp.trim());
+    if (!filterEmp.trim()) return true;
+    const q = filterEmp.toLowerCase().trim();
+    return (
+      String(log.employee_id).includes(q) ||
+      (log.employee_name && log.employee_name.toLowerCase().includes(q))
+    );
   });
 
   return (
@@ -72,7 +76,7 @@ export function WorkLogFeed({ apiUrl }) {
               <div className="worklog-item-header">
                 <div className="employee-pill">
                   <User size={14} />
-                  <span>Employee #{log.employee_id}</span>
+                  <span>{log.employee_name || `Employee #${log.employee_id}`}</span>
                 </div>
                 <div className="time-stamp-badge">
                   <Clock size={12} />

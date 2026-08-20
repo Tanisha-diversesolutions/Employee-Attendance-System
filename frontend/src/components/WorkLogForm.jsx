@@ -66,12 +66,11 @@ export function WorkLogForm({ apiUrl, onToast }) {
       <form onSubmit={handleSubmit} className="worklog-form">
         <div className="form-group">
           <label className="input-label">
-            Employee ID <span className="req-star">*</span>
+            Employee ID or Full Name <span className="req-star">*</span>
           </label>
           <input
-            type="number"
-            min="1"
-            placeholder="e.g. 1 or 2"
+            type="text"
+            placeholder="e.g. 1, 101, or Ananya Rout"
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
             className="styled-input"

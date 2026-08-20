@@ -7,9 +7,11 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
 
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        searchQuery === "" ||
-        String(r.employee_id).includes(searchQuery.trim());
+        q === "" ||
+        String(r.employee_id).includes(q) ||
+        (r.employee_name && r.employee_name.toLowerCase().includes(q));
       
       const matchesStatus =
         statusFilter === "all" ||
@@ -21,9 +23,10 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
 
   const handleExportCSV = () => {
     if (records.length === 0) return;
-    const headers = ["Employee ID", "Check-in Timestamp", "Status", "Delay (Minutes)"];
+    const headers = ["Employee ID", "Employee Name", "Check-in Timestamp", "Status", "Delay (Minutes)"];
     const rows = records.map((r) => [
       r.employee_id,
+      r.employee_name || `Employee #${r.employee_id}`,
       new Date(r.check_in).toISOString(),
       r.status?.toUpperCase(),
       r.late_by_minutes || 0,
@@ -146,11 +149,13 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
                     <td>
                       <div className="employee-cell">
                         <div className="table-avatar">
-                          {record.employee_id}
+                          {record.employee_name ? record.employee_name.charAt(0).toUpperCase() : record.employee_id}
                         </div>
                         <div className="employee-details">
-                          <span className="table-emp-name">Employee #{record.employee_id}</span>
-                          <span className="table-emp-id">Staff Member</span>
+                          <span className="table-emp-name">
+                            {record.employee_name || `Employee #${record.employee_id}`}
+                          </span>
+                          <span className="table-emp-id">Staff ID: #{record.employee_id}</span>
                         </div>
                       </div>
                     </td>

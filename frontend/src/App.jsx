@@ -22,6 +22,7 @@ import { LedgerTable } from "./components/LedgerTable";
 import { WorkLogFeed } from "./components/WorkLogFeed";
 import { AdminLogin } from "./components/AdminLogin";
 import { DemoToolbar } from "./components/DemoToolbar";
+import { EmployeeManager } from "./components/EmployeeManager";
 
 import "./App.css";
 
@@ -197,6 +198,13 @@ export default function App() {
               variant="info"
             />
           </div>
+
+          {/* Employee Directory & Registration */}
+          <EmployeeManager
+            apiUrl={API_URL}
+            onToast={showToast}
+            onEmployeeCreated={fetchAttendance}
+          />
 
           {/* Master Live Ledger */}
           <LedgerTable
