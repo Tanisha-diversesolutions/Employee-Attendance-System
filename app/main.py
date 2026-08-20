@@ -20,16 +20,21 @@ def home():
     return {"message": "Employee Attendance System API is running"}
 
 # Allow the React dev server and deployed Vercel frontend to call this API.
-allowed_origins = ["http://localhost:5173", "https://employee-attendance-system-1zih.vercel.app/"]
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://employee-attendance-system-phi-one.vercel.app"
+]
 configured_origins = os.getenv("CORS_ORIGINS", "")
-if configured_origins:   
+if configured_origins:
     allowed_origins.extend(
         origin.strip() for origin in configured_origins.split(",") if origin.strip()
     )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins if allowed_origins else ["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
