@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta, time
 from pydantic import BaseModel
-from fastapi import Depends, FastAPI 
+from fastapi import Depends, FastAPI , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -147,6 +147,35 @@ def simulate_late(db: Session = Depends(get_db)):
         db.add(rule)
     db.commit()
     return {"message": f"Reporting time set to {target} — next check-in will be marked late."}
+
+@app.get("/employees", response_model=list[schemas.EmployeeResponse])
+def list_employees(db: Session = Depends(get_db)):
+    """Returns every registered employee — used by the admin's Employee Directory."""
+    return db.query(models.Employee).order_by(models.Employee.id).all()
+
+
+@app.post("/employees", response_model=schemas.EmployeeResponse)
+def create_employee(entry: schemas.EmployeeCreate, db: Session = Depends(get_db)):
+    """
+    Registers a new employee. If no ID is given, the database assigns the next
+    available one automatically. If no email is given, a placeholder is generated.
+    """
+    if entry.id is not None:
+        existing = db.query(models.Employee).filter_by(id=entry.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Employee ID {entry.id} already exists.")
+
+    email = entry.email or f"{entry.name.lower().replace(' ', '.')}@company.com"
+
+    new_employee = models.Employee(
+        id=entry.id,
+        name=entry.name,
+        email=email,
+    )
+    db.add(new_employee)
+    db.commit()
+    db.refresh(new_employee)
+    return new_employee
 
 @app.post("/worklog/submit/{employee_id}")
 def submit_worklog(employee_id: int, entry: WorkLogSubmit, db: Session = Depends(get_db)):
