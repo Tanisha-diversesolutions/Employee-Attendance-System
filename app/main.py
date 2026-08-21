@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta, time
+from zoneinfo import ZoneInfo
 from pydantic import BaseModel
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,21 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .database import engine, get_db
+
+# Configure Timezone (default: Asia/Kolkata / IST UTC+5:30)
+TIMEZONE_NAME = os.getenv("APP_TIMEZONE", "Asia/Kolkata")
+try:
+    APP_TZ = ZoneInfo(TIMEZONE_NAME)
+except Exception:
+    APP_TZ = ZoneInfo("Asia/Kolkata")
+
+def get_current_time() -> datetime:
+    """Returns current naive datetime in the application's timezone."""
+    return datetime.now(APP_TZ).replace(tzinfo=None)
+
+def get_current_date():
+    """Returns current date in the application's timezone."""
+    return datetime.now(APP_TZ).date()
 
 # Ensure tables exist
 models.Base.metadata.create_all(bind=engine)
@@ -86,7 +102,7 @@ def create_employee(payload: schemas.EmployeeCreate, db: Session = Depends(get_d
     existing_email = db.query(models.Employee).filter(models.Employee.email == email).first()
     if existing_email:
         clean_name = "".join(c for c in name.lower().replace(" ", ".") if c.isalnum() or c == ".")
-        email = f"{clean_name}.{int(datetime.now().timestamp()) % 10000}@company.com"
+        email = f"{clean_name}.{int(get_current_time().timestamp()) % 10000}@company.com"
 
     # Check custom ID
     if payload.id is not None and payload.id > 0:
@@ -133,7 +149,7 @@ def check_in(identifier: str, db: Session = Depends(get_db)):
             detail=f"Employee '{identifier}' not found. Please verify your ID/Name or ask Admin to register you in the Admin Panel."
         )
 
-    now = datetime.now()
+    now = get_current_time()
 
     # Get the shift rule
     rule = db.query(models.ShiftRule).first()
@@ -168,7 +184,7 @@ def check_in(identifier: str, db: Session = Depends(get_db)):
 
 @app.get("/attendance/late-today")
 def get_late_today(db: Session = Depends(get_db)):
-    today = datetime.now().date()
+    today = get_current_date()
     records = db.query(models.Attendance).filter(models.Attendance.status == "late").all()
     today_records = [r for r in records if r.check_in.date() == today]
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
@@ -187,7 +203,7 @@ def get_late_today(db: Session = Depends(get_db)):
 
 @app.get("/attendance/today")
 def get_all_today(db: Session = Depends(get_db)):
-    today = datetime.now().date()
+    today = get_current_date()
     records = db.query(models.Attendance).order_by(models.Attendance.check_in.desc()).all()
     today_records = [r for r in records if r.check_in.date() == today]
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
@@ -219,12 +235,15 @@ def submit_worklog(identifier: str, entry: WorkLogSubmit, db: Session = Depends(
     """Employee submits today's work update by ID or Name."""
     emp = get_employee_by_identifier(identifier, db)
     emp_id = emp.id if emp else (int(identifier) if identifier.isdigit() else 1)
+    now = get_current_time()
 
     record = models.WorkLog(
         employee_id=emp_id,
+        log_date=get_current_date(),
         completed_work=entry.completed_work,
         pending_work=entry.pending_work,
         blockers=entry.blockers,
+        submitted_at=now,
     )
     db.add(record)
     db.commit()
@@ -235,7 +254,7 @@ def submit_worklog(identifier: str, entry: WorkLogSubmit, db: Session = Depends(
 @app.get("/worklog/today")
 def get_worklogs_today(db: Session = Depends(get_db)):
     """Admin-only view — every employee's work update for today."""
-    today = datetime.now().date()
+    today = get_current_date()
     logs = db.query(models.WorkLog).order_by(models.WorkLog.submitted_at.desc()).all()
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
     return [
@@ -287,7 +306,7 @@ def simulate_late(db: Session = Depends(get_db)):
     so the NEXT check-in you make will read as late.
     """
     rule = db.query(models.ShiftRule).first()
-    target = (datetime.now() - timedelta(minutes=1)).time()
+    target = (get_current_time() - timedelta(minutes=1)).time()
     if rule:
         rule.reporting_time = target
     else:
