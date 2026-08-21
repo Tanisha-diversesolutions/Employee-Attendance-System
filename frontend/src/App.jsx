@@ -21,7 +21,6 @@ import { WorkLogForm } from "./components/WorkLogForm";
 import { LedgerTable } from "./components/LedgerTable";
 import { WorkLogFeed } from "./components/WorkLogFeed";
 import { AdminLogin } from "./components/AdminLogin";
-import { DemoToolbar } from "./components/DemoToolbar";
 import { EmployeeManager } from "./components/EmployeeManager";
 
 import "./App.css";
@@ -162,13 +161,6 @@ export default function App() {
       {/* 4. ADMIN MANAGEMENT CONSOLE */}
       {role === "admin" && (
         <div className="dashboard-grid">
-          {/* Demo Sandbox Toolbar */}
-          <DemoToolbar
-            apiUrl={API_URL}
-            onResetLedger={() => setRecords([])}
-            onToast={showToast}
-          />
-
           {/* Executive Stat Cards */}
           <div className="stats-grid">
             <StatCard

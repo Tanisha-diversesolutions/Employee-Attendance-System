@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, Filter, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, Users } from "lucide-react";
+import { Search, Filter, Download, RefreshCw, AlertTriangle, CheckCircle, Clock, Users, Calendar } from "lucide-react";
 
 export function LedgerTable({ records, onRefresh, isRefreshing }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,11 +23,12 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
 
   const handleExportCSV = () => {
     if (records.length === 0) return;
-    const headers = ["Employee ID", "Employee Name", "Check-in Timestamp", "Status", "Delay (Minutes)"];
+    const headers = ["Employee ID", "Employee Name", "Punch Date", "Check-in Time", "Status", "Delay (Minutes)"];
     const rows = records.map((r) => [
       r.employee_id,
       r.employee_name || `Employee #${r.employee_id}`,
-      new Date(r.check_in).toISOString(),
+      new Date(r.check_in).toLocaleDateString([], { year: "numeric", month: "short", day: "2-digit" }),
+      new Date(r.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
       r.status?.toUpperCase(),
       r.late_by_minutes || 0,
     ]);
@@ -135,6 +136,7 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
             <thead>
               <tr>
                 <th>Employee</th>
+                <th>Date</th>
                 <th>Check-in Time</th>
                 <th>Status</th>
                 <th>Deviation from Policy</th>
@@ -157,6 +159,18 @@ export function LedgerTable({ records, onRefresh, isRefreshing }) {
                           </span>
                           <span className="table-emp-id">Staff ID: #{record.employee_id}</span>
                         </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="time-cell">
+                        <Calendar size={14} className="time-icon" />
+                        <span>
+                          {new Date(record.check_in).toLocaleDateString([], {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                          })}
+                        </span>
                       </div>
                     </td>
                     <td>
