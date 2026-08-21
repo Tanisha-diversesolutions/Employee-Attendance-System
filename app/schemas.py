@@ -1,16 +1,11 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime, date
-from typing import Optional 
-class AttendanceResponse(BaseModel):
-    employee_id: int
-    check_in: datetime
-    status: str
-    late_by_minutes: int
+from typing import Optional
 
 class EmployeeCreate(BaseModel):
+    id: Optional[int] = None
     name: str
     email: Optional[str] = None
-    id: Optional[int] = None
 
 class EmployeeResponse(BaseModel):
     id: int
@@ -19,4 +14,10 @@ class EmployeeResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
+class AttendanceResponse(BaseModel):
+    id: Optional[int] = None
+    employee_id: int
+    employee_name: Optional[str] = None
+    check_in: datetime
+    status: str
+    late_by_minutes: int

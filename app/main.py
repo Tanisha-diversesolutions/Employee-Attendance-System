@@ -1,21 +1,17 @@
 import os
 from datetime import datetime, timedelta, time
 from pydantic import BaseModel
-from fastapi import Depends, FastAPI , HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .database import engine, get_db
 
-
-
-
-# This line reads your models.py and actually creates the tables
-# in PostgreSQL the first time you run the app.
+# Ensure tables exist
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="Employee Attendance System API")
 
 @app.get("/")
 def home():
@@ -41,7 +37,76 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#  test comment test
+
+def get_employee_by_identifier(identifier: str, db: Session):
+    """
+    Look up an employee by numeric ID, exact name, or partial name match.
+    """
+    clean_id = str(identifier).strip()
+    # 1. Try as numeric ID
+    if clean_id.isdigit():
+        emp = db.query(models.Employee).filter(models.Employee.id == int(clean_id)).first()
+        if emp:
+            return emp
+
+    # 2. Try exact name match (case-insensitive)
+    emp = db.query(models.Employee).filter(models.Employee.name.ilike(clean_id)).first()
+    if emp:
+        return emp
+
+    # 3. Try partial name match (case-insensitive)
+    emp = db.query(models.Employee).filter(models.Employee.name.ilike(f"%{clean_id}%")).first()
+    return emp
+
+
+# ==========================================
+# EMPLOYEE MANAGEMENT ENDPOINTS
+# ==========================================
+
+@app.get("/employees", response_model=list[schemas.EmployeeResponse])
+def get_all_employees(db: Session = Depends(get_db)):
+    """Fetch all registered employees sorted by ID."""
+    return db.query(models.Employee).order_by(models.Employee.id.asc()).all()
+
+
+@app.post("/employees", response_model=schemas.EmployeeResponse)
+def create_employee(payload: schemas.EmployeeCreate, db: Session = Depends(get_db)):
+    """Admin creates a new employee with custom or auto-generated ID."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Employee name is required.")
+
+    # Email handling
+    if payload.email and payload.email.strip():
+        email = payload.email.strip()
+    else:
+        clean_name = "".join(c for c in name.lower().replace(" ", ".") if c.isalnum() or c == ".")
+        email = f"{clean_name}@company.com"
+
+    # Check for duplicate email and make unique if needed
+    existing_email = db.query(models.Employee).filter(models.Employee.email == email).first()
+    if existing_email:
+        clean_name = "".join(c for c in name.lower().replace(" ", ".") if c.isalnum() or c == ".")
+        email = f"{clean_name}.{int(datetime.now().timestamp()) % 10000}@company.com"
+
+    # Check custom ID
+    if payload.id is not None and payload.id > 0:
+        existing_id = db.query(models.Employee).filter(models.Employee.id == payload.id).first()
+        if existing_id:
+            raise HTTPException(status_code=400, detail=f"Employee ID #{payload.id} is already taken by '{existing_id.name}'.")
+        new_emp = models.Employee(id=payload.id, name=name, email=email)
+    else:
+        new_emp = models.Employee(name=name, email=email)
+
+    db.add(new_emp)
+    db.commit()
+    db.refresh(new_emp)
+    return new_emp
+
+
+# ==========================================
+# ATTENDANCE & PUNCH ENDPOINTS
+# ==========================================
 
 def calculate_status(check_in: datetime, reporting_time, grace_minutes: int = 0):
     """
@@ -57,16 +122,24 @@ def calculate_status(check_in: datetime, reporting_time, grace_minutes: int = 0)
     return "late", late_minutes
 
 
-@app.post("/attendance/checkin/{employee_id}", response_model=schemas.AttendanceResponse)
-def check_in(employee_id: int, db: Session = Depends(get_db)): 
+@app.post("/attendance/checkin/{identifier}", response_model=schemas.AttendanceResponse)
+def check_in(identifier: str, db: Session = Depends(get_db)):
+    """
+    Punch in by Employee ID (e.g. 1, 102) OR Employee Name (e.g. 'Ananya Rout').
+    """
+    emp = get_employee_by_identifier(identifier, db)
+    if not emp:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Employee '{identifier}' not found. Please verify your ID/Name or ask Admin to register you in the Admin Panel."
+        )
+
     now = datetime.now()
 
-    # Get the shift rule (for now, assume one rule for the whole company)
+    # Get the shift rule
     rule = db.query(models.ShiftRule).first()
-
-    # If no shift rule is configured, fall back to a sensible default
     if rule is None:
-        reporting_time = time(9, 0)
+        reporting_time = time(9, 30)
         grace_minutes = 0
     else:
         reporting_time = rule.reporting_time
@@ -75,7 +148,7 @@ def check_in(employee_id: int, db: Session = Depends(get_db)):
     status, late_by = calculate_status(now, reporting_time, grace_minutes)
 
     record = models.Attendance(
-        employee_id=employee_id,
+        employee_id=emp.id,
         check_in=now,
         status=status,
         late_by_minutes=late_by
@@ -83,31 +156,111 @@ def check_in(employee_id: int, db: Session = Depends(get_db)):
     db.add(record)
     db.commit()
     db.refresh(record)
-    return record
+
+    return {
+        "id": record.id,
+        "employee_id": emp.id,
+        "employee_name": emp.name,
+        "check_in": record.check_in,
+        "status": record.status,
+        "late_by_minutes": record.late_by_minutes
+    }
 
 
 @app.get("/attendance/late-today")
 def get_late_today(db: Session = Depends(get_db)):
     today = datetime.now().date()
     records = db.query(models.Attendance).filter(models.Attendance.status == "late").all()
-    return [r for r in records if r.check_in.date() == today]
+    today_records = [r for r in records if r.check_in.date() == today]
+    employees = {e.id: e.name for e in db.query(models.Employee).all()}
+    return [
+        {
+            "id": r.id,
+            "employee_id": r.employee_id,
+            "employee_name": employees.get(r.employee_id, f"Employee #{r.employee_id}"),
+            "check_in": r.check_in,
+            "status": r.status,
+            "late_by_minutes": r.late_by_minutes
+        }
+        for r in today_records
+    ]
+
 
 @app.get("/attendance/today")
 def get_all_today(db: Session = Depends(get_db)):
     today = datetime.now().date()
-    records = db.query(models.Attendance).all()
-    return [r for r in records if r.check_in.date() == today]
+    records = db.query(models.Attendance).order_by(models.Attendance.check_in.desc()).all()
+    today_records = [r for r in records if r.check_in.date() == today]
+    employees = {e.id: e.name for e in db.query(models.Employee).all()}
+    return [
+        {
+            "id": r.id,
+            "employee_id": r.employee_id,
+            "employee_name": employees.get(r.employee_id, f"Employee #{r.employee_id}"),
+            "check_in": r.check_in,
+            "status": r.status,
+            "late_by_minutes": r.late_by_minutes
+        }
+        for r in today_records
+    ]
+
+
+# ==========================================
+# WORK LOG / STANDUP ENDPOINTS
+# ==========================================
 
 class WorkLogSubmit(BaseModel):
     completed_work: str
     pending_work: str = ""
     blockers: str = ""
 
+
+@app.post("/worklog/submit/{identifier}")
+def submit_worklog(identifier: str, entry: WorkLogSubmit, db: Session = Depends(get_db)):
+    """Employee submits today's work update by ID or Name."""
+    emp = get_employee_by_identifier(identifier, db)
+    emp_id = emp.id if emp else (int(identifier) if identifier.isdigit() else 1)
+
+    record = models.WorkLog(
+        employee_id=emp_id,
+        completed_work=entry.completed_work,
+        pending_work=entry.pending_work,
+        blockers=entry.blockers,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return {"message": "Work update submitted.", "id": record.id}
+
+
+@app.get("/worklog/today")
+def get_worklogs_today(db: Session = Depends(get_db)):
+    """Admin-only view — every employee's work update for today."""
+    today = datetime.now().date()
+    logs = db.query(models.WorkLog).order_by(models.WorkLog.submitted_at.desc()).all()
+    employees = {e.id: e.name for e in db.query(models.Employee).all()}
+    return [
+        {
+            "employee_id": l.employee_id,
+            "employee_name": employees.get(l.employee_id, f"Employee #{l.employee_id}"),
+            "completed_work": l.completed_work,
+            "pending_work": l.pending_work,
+            "blockers": l.blockers,
+            "submitted_at": l.submitted_at,
+        }
+        for l in logs if l.submitted_at.date() == today
+    ]
+
+
+# ==========================================
+# DEMO & TESTING CONTROLS
+# ==========================================
+
 @app.post("/demo/reset")
 def reset_demo(db: Session = Depends(get_db)):
     """
-    Wipes attendance records, makes sure two demo employees exist,
-    and resets the shift rule to 9:30 AM. Safe to call as many times as needed.
+    Wipes attendance records, ensures demo employees exist,
+    and resets the shift rule to 9:30 AM.
     """
     db.query(models.Attendance).delete()
 
@@ -123,13 +276,9 @@ def reset_demo(db: Session = Depends(get_db)):
         db.add(models.Employee(id=1, name="Ananya Rout", email="ananya@company.com"))
     if not db.query(models.Employee).filter_by(id=2).first():
         db.add(models.Employee(id=2, name="Rohit Sahoo", email="rohit@company.com"))
-    if not db.query(models.Employee).filter_by(id=3).first():
-        db.add(models.Employee(id=3, name="Demo Employee", email="demo@company.com"))
-    if not db.query(models.Employee).filter_by(id=4).first():
-        db.add(models.Employee(id=4, name="Demo Employee 2", email="demo2@company.com"))
 
     db.commit()
-    return {"message": "Demo reset — 2 employees ready, shift rule set to 09:30, records cleared."}
+    return {"message": "Demo reset — demo employees ready, shift rule set to 09:30, records cleared."}
 
 
 @app.post("/demo/simulate-late")
@@ -147,63 +296,3 @@ def simulate_late(db: Session = Depends(get_db)):
         db.add(rule)
     db.commit()
     return {"message": f"Reporting time set to {target} — next check-in will be marked late."}
-
-@app.get("/employees", response_model=list[schemas.EmployeeResponse])
-def list_employees(db: Session = Depends(get_db)):
-    """Returns every registered employee — used by the admin's Employee Directory."""
-    return db.query(models.Employee).order_by(models.Employee.id).all()
-
-
-@app.post("/employees", response_model=schemas.EmployeeResponse)
-def create_employee(entry: schemas.EmployeeCreate, db: Session = Depends(get_db)):
-    """
-    Registers a new employee. If no ID is given, the database assigns the next
-    available one automatically. If no email is given, a placeholder is generated.
-    """
-    if entry.id is not None:
-        existing = db.query(models.Employee).filter_by(id=entry.id).first()
-        if existing:
-            raise HTTPException(status_code=400, detail=f"Employee ID {entry.id} already exists.")
-
-    email = entry.email or f"{entry.name.lower().replace(' ', '.')}@company.com"
-
-    new_employee = models.Employee(
-        id=entry.id,
-        name=entry.name,
-        email=email,
-    )
-    db.add(new_employee)
-    db.commit()
-    db.refresh(new_employee)
-    return new_employee
-
-@app.post("/worklog/submit/{employee_id}")
-def submit_worklog(employee_id: int, entry: WorkLogSubmit, db: Session = Depends(get_db)):
-    """Employee submits today's work update. Admin-only to read — enforced in the frontend for now."""
-    record = models.WorkLog(
-        employee_id=employee_id,
-        completed_work=entry.completed_work,
-        pending_work=entry.pending_work,
-        blockers=entry.blockers,
-    )
-    db.add(record)
-    db.commit()
-    db.refresh(record)
-    return {"message": "Work update submitted.", "id": record.id}
-
-
-@app.get("/worklog/today")
-def get_worklogs_today(db: Session = Depends(get_db)):
-    """Admin-only view — every employee's work update for today."""
-    today = datetime.now().date()
-    logs = db.query(models.WorkLog).all()
-    return [
-        {
-            "employee_id": l.employee_id,
-            "completed_work": l.completed_work,
-            "pending_work": l.pending_work,
-            "blockers": l.blockers,
-            "submitted_at": l.submitted_at,
-        }
-        for l in logs if l.submitted_at.date() == today
-    ]
