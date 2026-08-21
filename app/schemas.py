@@ -21,3 +21,4 @@ class AttendanceResponse(BaseModel):
     check_in: datetime
     status: str
     late_by_minutes: int
+    model_config = ConfigDict(from_attributes=True)

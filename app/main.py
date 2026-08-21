@@ -37,7 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 def get_employee_by_identifier(identifier: str, db: Session):
     """
     Look up an employee by numeric ID, exact name, or partial name match.
