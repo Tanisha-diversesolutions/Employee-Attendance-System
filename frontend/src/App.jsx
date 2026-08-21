@@ -54,18 +54,17 @@ export default function App() {
       const res = await axios.get(`${API_URL}/attendance/today`);
       setRecords(res.data || []);
     } catch {
-      /* silent during background poll */
+      /* silent on error */
     } finally {
       setIsRefreshing(false);
     }
   }, []);
 
-  // Real-time Polling for Admin View (Every 5 seconds)
+  // Fetch once on entering Admin View (No auto-polling, manual refresh only)
   useEffect(() => {
-    if (role !== "admin") return;
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 5000);
-    return () => clearInterval(interval);
+    if (role === "admin") {
+      fetchAttendance();
+    }
   }, [role, fetchAttendance]);
 
   // Executive KPI Calculations
@@ -177,7 +176,7 @@ export default function App() {
               value={totalPunches}
               subtext="Recorded employee timecards"
               icon={Users}
-              trend={{ label: "Live Polling Active", type: "trend-info" }}
+              trend={{ label: "Today's Ledger", type: "trend-info" }}
               variant="default"
             />
             <StatCard
