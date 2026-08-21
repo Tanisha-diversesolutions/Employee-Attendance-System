@@ -3,9 +3,9 @@ from datetime import datetime, date
 from typing import Optional
 
 class EmployeeCreate(BaseModel):
-    id: Optional[int] = None
+    id: int
     name: str
-    email: Optional[str] = None
+    email: str
 
 class EmployeeResponse(BaseModel):
     id: int

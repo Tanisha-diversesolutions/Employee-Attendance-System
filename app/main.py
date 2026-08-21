@@ -86,33 +86,29 @@ def get_all_employees(db: Session = Depends(get_db)):
 
 @app.post("/employees", response_model=schemas.EmployeeResponse)
 def create_employee(payload: schemas.EmployeeCreate, db: Session = Depends(get_db)):
-    """Admin creates a new employee with custom or auto-generated ID."""
+    """Admin creates a new employee with required custom ID and email."""
     name = payload.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="Employee name is required.")
 
-    # Email handling
-    if payload.email and payload.email.strip():
-        email = payload.email.strip()
-    else:
-        clean_name = "".join(c for c in name.lower().replace(" ", ".") if c.isalnum() or c == ".")
-        email = f"{clean_name}@company.com"
+    if payload.id is None or payload.id <= 0:
+        raise HTTPException(status_code=400, detail="A valid positive Employee ID is required.")
 
-    # Check for duplicate email and make unique if needed
-    existing_email = db.query(models.Employee).filter(models.Employee.email == email).first()
+    email = payload.email.strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Employee email address is required.")
+
+    # Check for duplicate ID
+    existing_id = db.query(models.Employee).filter(models.Employee.id == payload.id).first()
+    if existing_id:
+        raise HTTPException(status_code=400, detail=f"Employee ID #{payload.id} is already taken by '{existing_id.name}'.")
+
+    # Check for duplicate email
+    existing_email = db.query(models.Employee).filter(models.Employee.email.ilike(email)).first()
     if existing_email:
-        clean_name = "".join(c for c in name.lower().replace(" ", ".") if c.isalnum() or c == ".")
-        email = f"{clean_name}.{int(get_current_time().timestamp()) % 10000}@company.com"
+        raise HTTPException(status_code=400, detail=f"Email '{email}' is already registered to '{existing_email.name}' (ID: #{existing_email.id}).")
 
-    # Check custom ID
-    if payload.id is not None and payload.id > 0:
-        existing_id = db.query(models.Employee).filter(models.Employee.id == payload.id).first()
-        if existing_id:
-            raise HTTPException(status_code=400, detail=f"Employee ID #{payload.id} is already taken by '{existing_id.name}'.")
-        new_emp = models.Employee(id=payload.id, name=name, email=email)
-    else:
-        new_emp = models.Employee(name=name, email=email)
-
+    new_emp = models.Employee(id=payload.id, name=name, email=email)
     db.add(new_emp)
     db.commit()
     db.refresh(new_emp)

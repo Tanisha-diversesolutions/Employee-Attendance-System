@@ -37,8 +37,19 @@ export function EmployeeManager({ apiUrl, onToast, onEmployeeCreated }) {
     setSuccessMsg("");
 
     const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const parsedId = parseInt(customId, 10);
+
     if (!trimmedName) {
       setError("Please enter the employee's full name.");
+      return;
+    }
+    if (!customId || isNaN(parsedId) || parsedId <= 0) {
+      setError("Please enter a valid positive Employee ID.");
+      return;
+    }
+    if (!trimmedEmail) {
+      setError("Please enter the employee's email address.");
       return;
     }
 
@@ -46,8 +57,8 @@ export function EmployeeManager({ apiUrl, onToast, onEmployeeCreated }) {
     try {
       const payload = {
         name: trimmedName,
-        email: email.trim() || undefined,
-        id: customId ? parseInt(customId, 10) : undefined,
+        id: parsedId,
+        email: trimmedEmail,
       };
 
       const res = await axios.post(`${apiUrl}/employees`, payload);
@@ -114,7 +125,7 @@ export function EmployeeManager({ apiUrl, onToast, onEmployeeCreated }) {
       </div>
 
       <p className="card-description">
-        Register new employees with custom IDs. Once registered, employees can immediately punch in and submit daily work logs using either their ID or Full Name.
+        Register new employees with their assigned Employee ID and Email Address. Once registered, employees can immediately punch in and submit daily work logs.
       </p>
 
       {/* Grid: Create Form (Left) & Directory List (Right) */}
@@ -141,34 +152,32 @@ export function EmployeeManager({ apiUrl, onToast, onEmployeeCreated }) {
 
             <div className="form-row-two">
               <div className="form-group">
-                <label className="input-label">
-                  Custom ID <span className="label-hint">(Optional)</span>
-                </label>
+                <label className="input-label">Employee ID *</label>
                 <div className="input-with-icon">
                   <Hash size={14} className="field-icon" />
                   <input
                     type="number"
                     min="1"
-                    placeholder="Auto if blank"
+                    placeholder="e.g. 101"
                     value={customId}
                     onChange={(e) => setCustomId(e.target.value)}
                     className="styled-input with-icon"
+                    required
                   />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="input-label">
-                  Email Address <span className="label-hint">(Optional)</span>
-                </label>
+                <label className="input-label">Email Address *</label>
                 <div className="input-with-icon">
                   <Mail size={14} className="field-icon" />
                   <input
                     type="email"
-                    placeholder="Auto-generated if blank"
+                    placeholder="e.g. rahul@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="styled-input with-icon"
+                    required
                   />
                 </div>
               </div>
