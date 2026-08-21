@@ -297,20 +297,3 @@ def reset_demo(db: Session = Depends(get_db)):
 
     db.commit()
     return {"message": "Demo reset — demo employees ready, shift rule set to 09:30, records cleared."}
-
-
-@app.post("/demo/simulate-late")
-def simulate_late(db: Session = Depends(get_db)):
-    """
-    Sets the shift rule's reporting_time to a minute before right now,
-    so the NEXT check-in you make will read as late.
-    """
-    rule = db.query(models.ShiftRule).first()
-    target = (get_current_time() - timedelta(minutes=1)).time()
-    if rule:
-        rule.reporting_time = target
-    else:
-        rule = models.ShiftRule(reporting_time=target, grace_minutes=0)
-        db.add(rule)
-    db.commit()
-    return {"message": f"Reporting time set to {target} — next check-in will be marked late."}
