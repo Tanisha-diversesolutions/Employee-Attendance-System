@@ -185,8 +185,13 @@ def check_in(identifier: str, db: Session = Depends(get_db)):
 @app.get("/attendance/late-today")
 def get_late_today(db: Session = Depends(get_db)):
     today = get_current_date()
-    records = db.query(models.Attendance).filter(models.Attendance.status == "late").all()
-    today_records = [r for r in records if r.check_in.date() == today]
+    start_of_today = datetime.combine(today, time.min)
+    end_of_today = datetime.combine(today, time.max)
+    records = db.query(models.Attendance).filter(
+        models.Attendance.status == "late",
+        models.Attendance.check_in >= start_of_today,
+        models.Attendance.check_in <= end_of_today
+    ).order_by(models.Attendance.check_in.desc()).all()
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
     return [
         {
@@ -197,15 +202,19 @@ def get_late_today(db: Session = Depends(get_db)):
             "status": r.status,
             "late_by_minutes": r.late_by_minutes
         }
-        for r in today_records
+        for r in records
     ]
 
 
 @app.get("/attendance/today")
 def get_all_today(db: Session = Depends(get_db)):
     today = get_current_date()
-    records = db.query(models.Attendance).order_by(models.Attendance.check_in.desc()).all()
-    today_records = [r for r in records if r.check_in.date() == today]
+    start_of_today = datetime.combine(today, time.min)
+    end_of_today = datetime.combine(today, time.max)
+    records = db.query(models.Attendance).filter(
+        models.Attendance.check_in >= start_of_today,
+        models.Attendance.check_in <= end_of_today
+    ).order_by(models.Attendance.check_in.desc()).all()
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
     return [
         {
@@ -216,7 +225,7 @@ def get_all_today(db: Session = Depends(get_db)):
             "status": r.status,
             "late_by_minutes": r.late_by_minutes
         }
-        for r in today_records
+        for r in records
     ]
 
 
@@ -234,15 +243,19 @@ class WorkLogSubmit(BaseModel):
 def submit_worklog(identifier: str, entry: WorkLogSubmit, db: Session = Depends(get_db)):
     """Employee submits today's work update by ID or Name."""
     emp = get_employee_by_identifier(identifier, db)
-    emp_id = emp.id if emp else (int(identifier) if identifier.isdigit() else 1)
+    if not emp:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Employee '{identifier}' not found. Please verify your ID/Name or ask Admin to register you."
+        )
     now = get_current_time()
 
     record = models.WorkLog(
-        employee_id=emp_id,
+        employee_id=emp.id,
         log_date=get_current_date(),
-        completed_work=entry.completed_work,
-        pending_work=entry.pending_work,
-        blockers=entry.blockers,
+        completed_work=entry.completed_work.strip(),
+        pending_work=entry.pending_work.strip(),
+        blockers=entry.blockers.strip(),
         submitted_at=now,
     )
     db.add(record)
@@ -255,7 +268,12 @@ def submit_worklog(identifier: str, entry: WorkLogSubmit, db: Session = Depends(
 def get_worklogs_today(db: Session = Depends(get_db)):
     """Admin-only view — every employee's work update for today."""
     today = get_current_date()
-    logs = db.query(models.WorkLog).order_by(models.WorkLog.submitted_at.desc()).all()
+    start_of_today = datetime.combine(today, time.min)
+    end_of_today = datetime.combine(today, time.max)
+    logs = db.query(models.WorkLog).filter(
+        models.WorkLog.submitted_at >= start_of_today,
+        models.WorkLog.submitted_at <= end_of_today
+    ).order_by(models.WorkLog.submitted_at.desc()).all()
     employees = {e.id: e.name for e in db.query(models.Employee).all()}
     return [
         {
@@ -266,7 +284,7 @@ def get_worklogs_today(db: Session = Depends(get_db)):
             "blockers": l.blockers,
             "submitted_at": l.submitted_at,
         }
-        for l in logs if l.submitted_at.date() == today
+        for l in logs
     ]
 
 
